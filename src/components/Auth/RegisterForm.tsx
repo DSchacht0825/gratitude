@@ -16,6 +16,18 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onToggleMode }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Basic validation
+    if (!email.includes('@') || !email.includes('.')) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      return;
+    }
+
     setLoading(true);
 
     try {

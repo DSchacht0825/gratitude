@@ -21,7 +21,8 @@ const JournalEntry: React.FC = () => {
   useEffect(() => {
     const loadEntry = async () => {
       try {
-        const response = await fetch('/api/journal', {
+        const apiUrl = process.env.REACT_APP_API_URL || '';
+        const response = await fetch(`${apiUrl}/api/journal`, {
           credentials: 'include'
         });
         if (response.ok) {
@@ -43,7 +44,8 @@ const JournalEntry: React.FC = () => {
   const saveEntry = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/journal', {
+      const apiUrl = process.env.REACT_APP_API_URL || '';
+      const response = await fetch(`${apiUrl}/api/journal`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

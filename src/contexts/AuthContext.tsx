@@ -35,7 +35,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await fetch('/api/auth/me', {
+        const apiUrl = process.env.REACT_APP_API_URL || '';
+        const response = await fetch(`${apiUrl}/api/auth/me`, {
           credentials: 'include'
         });
         if (response.ok) {
@@ -53,7 +54,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const response = await fetch('/api/auth/login', {
+    const apiUrl = process.env.REACT_APP_API_URL || '';
+    const response = await fetch(`${apiUrl}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -62,7 +64,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || 'Login failed');
+      throw new Error(error.error || 'Login failed');
     }
 
     const user = await response.json();
@@ -70,7 +72,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const register = async (email: string, password: string, name?: string) => {
-    const response = await fetch('/api/auth/register', {
+    const apiUrl = process.env.REACT_APP_API_URL || '';
+    const response = await fetch(`${apiUrl}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -79,7 +82,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || 'Registration failed');
+      throw new Error(error.error || 'Registration failed');
     }
 
     const user = await response.json();
@@ -88,7 +91,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     try {
-      await fetch('/api/auth/logout', {
+      const apiUrl = process.env.REACT_APP_API_URL || '';
+      await fetch(`${apiUrl}/api/auth/logout`, {
         method: 'POST',
         credentials: 'include',
       });
