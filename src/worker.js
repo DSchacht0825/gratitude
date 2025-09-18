@@ -1,6 +1,33 @@
-import { Router } from 'itty-router';
+// Simple router without external dependencies
+const router = {
+  routes: new Map(),
+  get: function(path, handler) { this.routes.set(`GET ${path}`, handler); },
+  post: function(path, handler) { this.routes.set(`POST ${path}`, handler); },
+  options: function(path, handler) { this.routes.set(`OPTIONS ${path}`, handler); },
+  handle: async function(request, env, ctx) {
+    const url = new URL(request.url);
+    const key = `${request.method} ${url.pathname}`;
 
-const router = Router();
+    // Handle CORS preflight
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { headers: corsHeaders });
+    }
+
+    // Find exact match first
+    if (this.routes.has(key)) {
+      return await this.routes.get(key)(request, env, ctx);
+    }
+
+    // Handle wildcard routes
+    for (const [routeKey, handler] of this.routes.entries()) {
+      if (routeKey.includes('*') && key.startsWith(routeKey.replace('*', ''))) {
+        return await handler(request, env, ctx);
+      }
+    }
+
+    return new Response('Not Found', { status: 404 });
+  }
+};
 
 // CORS headers
 const corsHeaders = {
@@ -222,8 +249,7 @@ function getCookieValue(cookieHeader, name) {
   return match ? match[1] : null;
 }
 
-// 404 handler
-router.all('*', () => new Response('Not Found', { status: 404 }));
+// 404 handler is built into the router.handle method
 
 export default {
   async fetch(request, env, ctx) {
