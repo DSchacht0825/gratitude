@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { apiEndpoints } from '../../config/api';
 
 interface JournalEntryData {
   morningGratitude1?: string;
@@ -21,8 +22,7 @@ const JournalEntry: React.FC = () => {
   useEffect(() => {
     const loadEntry = async () => {
       try {
-        const apiUrl = process.env.REACT_APP_API_URL || '';
-        const response = await fetch(`${apiUrl}/api/journal`, {
+        const response = await fetch(apiEndpoints.journal.get, {
           credentials: 'include'
         });
         if (response.ok) {
@@ -44,8 +44,7 @@ const JournalEntry: React.FC = () => {
   const saveEntry = async () => {
     setLoading(true);
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || '';
-      const response = await fetch(`${apiUrl}/api/journal`, {
+      const response = await fetch(apiEndpoints.journal.save, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

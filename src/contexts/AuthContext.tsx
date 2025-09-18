@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { apiEndpoints } from '../config/api';
 
 interface User {
   id: string;
@@ -35,8 +36,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const apiUrl = process.env.REACT_APP_API_URL || '';
-        const response = await fetch(`${apiUrl}/api/auth/me`, {
+        const response = await fetch(apiEndpoints.auth.me, {
           credentials: 'include'
         });
         if (response.ok) {
@@ -54,8 +54,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const apiUrl = process.env.REACT_APP_API_URL || '';
-    const response = await fetch(`${apiUrl}/api/auth/login`, {
+    const response = await fetch(apiEndpoints.auth.login, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -72,8 +71,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const register = async (email: string, password: string, name?: string) => {
-    const apiUrl = process.env.REACT_APP_API_URL || '';
-    const response = await fetch(`${apiUrl}/api/auth/register`, {
+    const response = await fetch(apiEndpoints.auth.register, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
@@ -91,8 +89,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     try {
-      const apiUrl = process.env.REACT_APP_API_URL || '';
-      await fetch(`${apiUrl}/api/auth/logout`, {
+      await fetch(apiEndpoints.auth.logout, {
         method: 'POST',
         credentials: 'include',
       });
