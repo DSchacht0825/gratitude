@@ -246,6 +246,32 @@ const JournalEntry: React.FC = () => {
     </div>
   );
 
+  const morningReview = (
+    <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+      <h3 className="text-sm font-medium text-green-800 mb-3">This Morning's Reflections</h3>
+      <div className="space-y-2 text-sm">
+        {entry.morningGratitude1 && (
+          <div><span className="font-medium text-green-700">Gratitude 1:</span> {entry.morningGratitude1}</div>
+        )}
+        {entry.morningGratitude2 && (
+          <div><span className="font-medium text-green-700">Gratitude 2:</span> {entry.morningGratitude2}</div>
+        )}
+        {entry.morningGratitude3 && (
+          <div><span className="font-medium text-green-700">Gratitude 3:</span> {entry.morningGratitude3}</div>
+        )}
+        {entry.morningIntention && (
+          <div><span className="font-medium text-green-700">Intention:</span> {entry.morningIntention}</div>
+        )}
+        {entry.morningPrayer && (
+          <div><span className="font-medium text-green-700">Prayer:</span> {entry.morningPrayer}</div>
+        )}
+        {!entry.morningGratitude1 && !entry.morningGratitude2 && !entry.morningGratitude3 && !entry.morningIntention && !entry.morningPrayer && (
+          <div className="text-green-600 italic">No morning reflections yet for this day.</div>
+        )}
+      </div>
+    </div>
+  );
+
   const eveningPrompts = (
     <div className="space-y-6">
       <div className="text-center mb-8">
@@ -254,6 +280,8 @@ const JournalEntry: React.FC = () => {
           "God comes to you disguised as your life."
         </p>
       </div>
+
+      {morningReview}
 
       <div className="space-y-6">
         <div>
