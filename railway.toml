@@ -1,0 +1,19 @@
+[build]
+builder = "nixpacks"
+
+[deploy]
+healthcheckPath = "/"
+healthcheckTimeout = 300
+restartPolicyType = "always"
+
+[[services]]
+name = "web"
+source = "."
+
+[services.web]
+healthcheckPath = "/"
+healthcheckTimeout = 300
+
+[services.web.variables]
+NODE_ENV = "production"
+PORT = "3000"

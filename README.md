@@ -1,46 +1,105 @@
-# Getting Started with Create React App
+# The Daily Pause
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A contemplative journaling application inspired by Richard Rohr's spiritual wisdom, combining the structure of the Five Minute Journal with deep spiritual reflection.
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+- **Morning Contemplation**: Start your day with gratitude, intention setting, and prayer
+- **Evening Reflection**: End your day by recognizing the sacred in everyday moments
+- **Beautiful Backgrounds**: Calming nature images from Unsplash
+- **Secure Authentication**: User accounts with encrypted passwords
+- **Daily Entries**: One journal entry per day with morning and evening sections
 
-### `npm start`
+## Getting Started
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+### Prerequisites
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+- Node.js (v16 or higher)
+- PostgreSQL database
 
-### `npm test`
+### Installation
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd the-daily-pause
+```
 
-### `npm run build`
+2. Install dependencies:
+```bash
+npm install
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+3. Set up environment variables:
+Create a `.env` file in the root directory:
+```
+DATABASE_URL="postgresql://username:password@localhost:5432/daily_pause"
+JWT_SECRET="your-secure-jwt-secret-key"
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+4. Set up the database:
+```bash
+npx prisma migrate dev
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+5. Generate Prisma client:
+```bash
+npx prisma generate
+```
 
-### `npm run eject`
+### Development
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+Run the development server:
+```bash
+npm run dev
+```
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+This starts the React development server on `http://localhost:3000`.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+### Production
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+Build and start the production server:
+```bash
+npm run build
+npm start
+```
 
-## Learn More
+## Deployment on Railway
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+1. Connect your GitHub repository to Railway
+2. Add a PostgreSQL service to your Railway project
+3. Set the following environment variables in Railway:
+   - `JWT_SECRET`: A secure secret key for JWT tokens
+4. The `DATABASE_URL` will be automatically set by Railway's PostgreSQL service
+5. Deploy!
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Spiritual Prompts
+
+### Morning Practice
+- Three gratitudes to begin the day
+- Setting a daily intention
+- A prayer or sacred word to carry forward
+
+### Evening Practice
+- Recognizing where the Divine appeared in your day
+- Reflecting on life's teachings
+- Gratitude for the day's gifts
+
+## Technology Stack
+
+- **Frontend**: React, TypeScript, Tailwind CSS
+- **Backend**: Express.js, Node.js
+- **Database**: PostgreSQL with Prisma ORM
+- **Authentication**: JWT tokens with bcrypt
+- **Images**: Unsplash API
+- **Deployment**: Railway
+
+## License
+
+This project is licensed under the MIT License.
+
+## Inspiration
+
+"We do not think ourselves into new ways of living, we live ourselves into new ways of thinking." - Richard Rohr
+
+This application is designed to help users cultivate a daily practice of noticing the sacred in ordinary moments, drawing from the contemplative tradition that Richard Rohr teaches.
