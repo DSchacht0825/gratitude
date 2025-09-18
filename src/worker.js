@@ -82,7 +82,7 @@ router.post('/api/auth/register', async (request, env) => {
       headers: {
         ...getCorsHeaders(request),
         'Content-Type': 'application/json',
-        'Set-Cookie': `session=${session}; HttpOnly; Secure; SameSite=Strict; Max-Age=604800`
+        'Set-Cookie': `session=${session}; HttpOnly; Secure; SameSite=None; Max-Age=604800; Path=/`
       }
     });
   } catch (error) {
@@ -116,7 +116,7 @@ router.post('/api/auth/login', async (request, env) => {
       headers: {
         ...getCorsHeaders(request),
         'Content-Type': 'application/json',
-        'Set-Cookie': `session=${session}; HttpOnly; Secure; SameSite=Strict; Max-Age=604800`
+        'Set-Cookie': `session=${session}; HttpOnly; Secure; SameSite=None; Max-Age=604800; Path=/`
       }
     });
   } catch (error) {
@@ -170,7 +170,7 @@ router.post('/api/auth/logout', async (request, env) => {
     headers: {
       ...getCorsHeaders(request),
       'Content-Type': 'application/json',
-      'Set-Cookie': 'session=; HttpOnly; Secure; SameSite=Strict; Max-Age=0'
+      'Set-Cookie': 'session=; HttpOnly; Secure; SameSite=None; Max-Age=0; Path=/'
     }
   });
 });
