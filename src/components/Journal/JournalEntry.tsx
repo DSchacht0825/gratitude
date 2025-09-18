@@ -19,6 +19,32 @@ const JournalEntry: React.FC = () => {
   const [currentSection, setCurrentSection] = useState<'morning' | 'evening'>('morning');
   const [loading, setLoading] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string>('');
+  const [currentDate, setCurrentDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [availableDates, setAvailableDates] = useState<string[]>([]);
+  const [hasEntry, setHasEntry] = useState<boolean>(false);
+
+  useEffect(() => {
+    const loadAvailableDates = async () => {
+      try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+
+        const response = await fetch(apiEndpoints.journal.dates, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          const dates = await response.json();
+          setAvailableDates(dates.map((d: any) => d.date));
+        }
+      } catch (error) {
+        console.error('Failed to load dates:', error);
+      }
+    };
+
+    loadAvailableDates();
+  }, []);
 
   useEffect(() => {
     const loadEntry = async () => {
@@ -26,7 +52,8 @@ const JournalEntry: React.FC = () => {
         const token = localStorage.getItem('auth_token');
         if (!token) return;
 
-        const response = await fetch(apiEndpoints.journal.get, {
+        const url = `${apiEndpoints.journal.get}?date=${currentDate}`;
+        const response = await fetch(url, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -34,6 +61,7 @@ const JournalEntry: React.FC = () => {
         if (response.ok) {
           const data = await response.json();
           setEntry(data || {});
+          setHasEntry(!!data && !!data.id);
         }
       } catch (error) {
         console.error('Failed to load entry:', error);
@@ -41,7 +69,7 @@ const JournalEntry: React.FC = () => {
     };
 
     loadEntry();
-  }, []);
+  }, [currentDate]);
 
   const handleInputChange = (field: keyof JournalEntryData, value: string) => {
     setEntry(prev => ({ ...prev, [field]: value }));
@@ -69,6 +97,11 @@ const JournalEntry: React.FC = () => {
         console.log('Entry saved successfully');
         setSaveMessage('Entry saved successfully! ✓');
         setTimeout(() => setSaveMessage(''), 3000);
+        setHasEntry(true);
+        // Refresh available dates
+        if (!availableDates.includes(currentDate)) {
+          setAvailableDates(prev => [currentDate, ...prev].sort().reverse());
+        }
       } else {
         console.error('Failed to save entry');
         setSaveMessage('Failed to save entry. Please try again.');
@@ -81,6 +114,58 @@ const JournalEntry: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const deleteEntry = async () => {
+    if (!window.confirm('Are you sure you want to delete this journal entry? This action cannot be undone.')) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        console.error('No auth token found');
+        return;
+      }
+
+      const response = await fetch(apiEndpoints.journal.delete, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ date: currentDate }),
+      });
+
+      if (response.ok) {
+        setSaveMessage('Entry deleted successfully');
+        setTimeout(() => setSaveMessage(''), 3000);
+        setEntry({});
+        setHasEntry(false);
+        // Remove from available dates
+        setAvailableDates(prev => prev.filter(date => date !== currentDate));
+      } else {
+        setSaveMessage('Failed to delete entry. Please try again.');
+        setTimeout(() => setSaveMessage(''), 3000);
+      }
+    } catch (error) {
+      console.error('Failed to delete entry:', error);
+      setSaveMessage('Failed to delete entry. Please try again.');
+      setTimeout(() => setSaveMessage(''), 3000);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
   };
 
   const morningPrompts = (
@@ -242,6 +327,54 @@ const JournalEntry: React.FC = () => {
   return (
     <div className="max-w-2xl mx-auto p-6">
       <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg p-8">
+        {/* Date Navigation */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-xl font-medium text-gray-800">
+              {formatDate(currentDate)}
+            </h1>
+            <div className="flex items-center space-x-2">
+              <input
+                type="date"
+                value={currentDate}
+                onChange={(e) => setCurrentDate(e.target.value)}
+                className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              />
+              {hasEntry && (
+                <button
+                  onClick={deleteEntry}
+                  disabled={loading}
+                  className="px-3 py-1 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50"
+                >
+                  Delete
+                </button>
+              )}
+            </div>
+          </div>
+
+          {availableDates.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              <span className="text-sm text-gray-600">Previous entries:</span>
+              {availableDates.slice(0, 5).map((date) => (
+                <button
+                  key={date}
+                  onClick={() => setCurrentDate(date)}
+                  className={`px-2 py-1 text-xs rounded-md border transition-colors ${
+                    date === currentDate
+                      ? 'bg-green-100 border-green-300 text-green-700'
+                      : 'bg-gray-100 border-gray-300 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                </button>
+              ))}
+              {availableDates.length > 5 && (
+                <span className="text-xs text-gray-500">+{availableDates.length - 5} more</span>
+              )}
+            </div>
+          )}
+        </div>
+
         <div className="flex justify-center mb-8">
           <div className="bg-gray-100 rounded-lg p-1 flex">
             <button

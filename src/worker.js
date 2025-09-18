@@ -251,12 +251,79 @@ router.get('/api/journal', async (request, env) => {
     });
   }
 
-  const today = new Date().toISOString().split('T')[0];
+  const url = new URL(request.url);
+  const date = url.searchParams.get('date') || new Date().toISOString().split('T')[0];
+
   const entry = await env.DB.prepare(
     'SELECT * FROM journal_entries WHERE user_id = ? AND date = ?'
-  ).bind(session.user_id, today).first();
+  ).bind(session.user_id, date).first();
 
   return new Response(JSON.stringify(entry || {}), {
+    headers: { ...getCorsHeaders(request), 'Content-Type': 'application/json' }
+  });
+});
+
+// Delete journal entry
+router.post('/api/journal/delete', async (request, env) => {
+  const token = getAuthToken(request);
+
+  if (!token) {
+    return new Response(JSON.stringify({ error: 'Not authenticated' }), {
+      status: 401,
+      headers: { ...getCorsHeaders(request), 'Content-Type': 'application/json' }
+    });
+  }
+
+  const session = await env.DB.prepare(
+    'SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?'
+  ).bind(token, new Date().toISOString()).first();
+
+  if (!session) {
+    return new Response(JSON.stringify({ error: 'Session expired' }), {
+      status: 401,
+      headers: { ...getCorsHeaders(request), 'Content-Type': 'application/json' }
+    });
+  }
+
+  const { date } = await request.json();
+  const deleteDate = date || new Date().toISOString().split('T')[0];
+
+  await env.DB.prepare(
+    'DELETE FROM journal_entries WHERE user_id = ? AND date = ?'
+  ).bind(session.user_id, deleteDate).run();
+
+  return new Response(JSON.stringify({ success: true }), {
+    headers: { ...getCorsHeaders(request), 'Content-Type': 'application/json' }
+  });
+});
+
+// Get list of dates with entries
+router.get('/api/journal/dates', async (request, env) => {
+  const token = getAuthToken(request);
+
+  if (!token) {
+    return new Response(JSON.stringify({ error: 'Not authenticated' }), {
+      status: 401,
+      headers: { ...getCorsHeaders(request), 'Content-Type': 'application/json' }
+    });
+  }
+
+  const session = await env.DB.prepare(
+    'SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?'
+  ).bind(token, new Date().toISOString()).first();
+
+  if (!session) {
+    return new Response(JSON.stringify({ error: 'Session expired' }), {
+      status: 401,
+      headers: { ...getCorsHeaders(request), 'Content-Type': 'application/json' }
+    });
+  }
+
+  const dates = await env.DB.prepare(
+    'SELECT date FROM journal_entries WHERE user_id = ? ORDER BY date DESC'
+  ).bind(session.user_id).all();
+
+  return new Response(JSON.stringify(dates.results || []), {
     headers: { ...getCorsHeaders(request), 'Content-Type': 'application/json' }
   });
 });

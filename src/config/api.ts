@@ -26,5 +26,7 @@ export const apiEndpoints = {
   journal: {
     get: `${API_URL}/api/journal`,
     save: `${API_URL}/api/journal`,
+    delete: `${API_URL}/api/journal/delete`,
+    dates: `${API_URL}/api/journal/dates`,
   },
 };
