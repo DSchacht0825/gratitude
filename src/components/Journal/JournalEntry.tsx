@@ -18,6 +18,7 @@ const JournalEntry: React.FC = () => {
   const [entry, setEntry] = useState<JournalEntryData>({});
   const [currentSection, setCurrentSection] = useState<'morning' | 'evening'>('morning');
   const [loading, setLoading] = useState(false);
+  const [saveMessage, setSaveMessage] = useState<string>('');
 
   useEffect(() => {
     const loadEntry = async () => {
@@ -66,11 +67,17 @@ const JournalEntry: React.FC = () => {
 
       if (response.ok) {
         console.log('Entry saved successfully');
+        setSaveMessage('Entry saved successfully! ✓');
+        setTimeout(() => setSaveMessage(''), 3000);
       } else {
         console.error('Failed to save entry');
+        setSaveMessage('Failed to save entry. Please try again.');
+        setTimeout(() => setSaveMessage(''), 3000);
       }
     } catch (error) {
       console.error('Failed to save entry:', error);
+      setSaveMessage('Failed to save entry. Please try again.');
+      setTimeout(() => setSaveMessage(''), 3000);
     } finally {
       setLoading(false);
     }
@@ -270,6 +277,13 @@ const JournalEntry: React.FC = () => {
           >
             {loading ? 'Saving...' : 'Save Entry'}
           </button>
+          {saveMessage && (
+            <div className={`mt-3 text-sm font-medium ${
+              saveMessage.includes('successfully') ? 'text-green-600' : 'text-red-600'
+            }`}>
+              {saveMessage}
+            </div>
+          )}
         </div>
       </div>
     </div>
