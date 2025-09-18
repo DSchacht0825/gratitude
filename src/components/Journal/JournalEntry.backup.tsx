@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { mockJournal } from '../../utils/mockAuth';
 
 interface JournalEntryData {
   morningGratitude1?: string;
@@ -22,9 +21,12 @@ const JournalEntry: React.FC = () => {
   useEffect(() => {
     const loadEntry = async () => {
       try {
-        const data = await mockJournal.getEntry();
-        if (data) {
-          setEntry(data);
+        const response = await fetch('/api/journal', {
+          credentials: 'include'
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setEntry(data || {});
         }
       } catch (error) {
         console.error('Failed to load entry:', error);
@@ -41,8 +43,20 @@ const JournalEntry: React.FC = () => {
   const saveEntry = async () => {
     setLoading(true);
     try {
-      await mockJournal.saveEntry(entry);
-      console.log('Entry saved successfully');
+      const response = await fetch('/api/journal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(entry),
+      });
+
+      if (response.ok) {
+        console.log('Entry saved successfully');
+      } else {
+        console.error('Failed to save entry');
+      }
     } catch (error) {
       console.error('Failed to save entry:', error);
     } finally {
