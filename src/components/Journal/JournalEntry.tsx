@@ -22,8 +22,13 @@ const JournalEntry: React.FC = () => {
   useEffect(() => {
     const loadEntry = async () => {
       try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+
         const response = await fetch(apiEndpoints.journal.get, {
-          credentials: 'include'
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         });
         if (response.ok) {
           const data = await response.json();
@@ -44,12 +49,18 @@ const JournalEntry: React.FC = () => {
   const saveEntry = async () => {
     setLoading(true);
     try {
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        console.error('No auth token found');
+        return;
+      }
+
       const response = await fetch(apiEndpoints.journal.save, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
-        credentials: 'include',
         body: JSON.stringify(entry),
       });
 

@@ -78,11 +78,15 @@ router.post('/api/auth/register', async (request, env) => {
       'INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)'
     ).bind(session, userId, new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()).run();
 
-    return new Response(JSON.stringify({ id: userId, email, name }), {
+    return new Response(JSON.stringify({
+      id: userId,
+      email,
+      name,
+      token: session
+    }), {
       headers: {
         ...getCorsHeaders(request),
-        'Content-Type': 'application/json',
-        'Set-Cookie': `session=${session}; HttpOnly; Secure; SameSite=None; Max-Age=604800; Path=/`
+        'Content-Type': 'application/json'
       }
     });
   } catch (error) {
@@ -112,11 +116,15 @@ router.post('/api/auth/login', async (request, env) => {
       'INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)'
     ).bind(session, user.id, new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()).run();
 
-    return new Response(JSON.stringify({ id: user.id, email: user.email, name: user.name }), {
+    return new Response(JSON.stringify({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      token: session
+    }), {
       headers: {
         ...getCorsHeaders(request),
-        'Content-Type': 'application/json',
-        'Set-Cookie': `session=${session}; HttpOnly; Secure; SameSite=None; Max-Age=604800; Path=/`
+        'Content-Type': 'application/json'
       }
     });
   } catch (error) {
@@ -129,9 +137,9 @@ router.post('/api/auth/login', async (request, env) => {
 
 // Get current user
 router.get('/api/auth/me', async (request, env) => {
-  const sessionId = getCookieValue(request.headers.get('Cookie'), 'session');
+  const token = getAuthToken(request);
 
-  if (!sessionId) {
+  if (!token) {
     return new Response(JSON.stringify({ error: 'Not authenticated' }), {
       status: 401,
       headers: { ...getCorsHeaders(request), 'Content-Type': 'application/json' }
@@ -140,7 +148,7 @@ router.get('/api/auth/me', async (request, env) => {
 
   const session = await env.DB.prepare(
     'SELECT users.* FROM sessions JOIN users ON sessions.user_id = users.id WHERE sessions.id = ? AND sessions.expires_at > ?'
-  ).bind(sessionId, new Date().toISOString()).first();
+  ).bind(token, new Date().toISOString()).first();
 
   if (!session) {
     return new Response(JSON.stringify({ error: 'Session expired' }), {
@@ -177,9 +185,9 @@ router.post('/api/auth/logout', async (request, env) => {
 
 // Save journal entry
 router.post('/api/journal', async (request, env) => {
-  const sessionId = getCookieValue(request.headers.get('Cookie'), 'session');
+  const token = getAuthToken(request);
 
-  if (!sessionId) {
+  if (!token) {
     return new Response(JSON.stringify({ error: 'Not authenticated' }), {
       status: 401,
       headers: { ...getCorsHeaders(request), 'Content-Type': 'application/json' }
@@ -188,7 +196,7 @@ router.post('/api/journal', async (request, env) => {
 
   const session = await env.DB.prepare(
     'SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?'
-  ).bind(sessionId, new Date().toISOString()).first();
+  ).bind(token, new Date().toISOString()).first();
 
   if (!session) {
     return new Response(JSON.stringify({ error: 'Session expired' }), {
@@ -209,10 +217,10 @@ router.post('/api/journal', async (request, env) => {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).bind(
     entryId, session.user_id, today,
-    entry.morningGratitude1, entry.morningGratitude2, entry.morningGratitude3,
-    entry.morningIntention, entry.morningPrayer,
-    entry.eveningReflection1, entry.eveningReflection2, entry.eveningReflection3,
-    entry.eveningLearning, entry.eveningGratitude,
+    entry.morningGratitude1 || null, entry.morningGratitude2 || null, entry.morningGratitude3 || null,
+    entry.morningIntention || null, entry.morningPrayer || null,
+    entry.eveningReflection1 || null, entry.eveningReflection2 || null, entry.eveningReflection3 || null,
+    entry.eveningLearning || null, entry.eveningGratitude || null,
     new Date().toISOString()
   ).run();
 
@@ -223,9 +231,9 @@ router.post('/api/journal', async (request, env) => {
 
 // Get journal entry
 router.get('/api/journal', async (request, env) => {
-  const sessionId = getCookieValue(request.headers.get('Cookie'), 'session');
+  const token = getAuthToken(request);
 
-  if (!sessionId) {
+  if (!token) {
     return new Response(JSON.stringify({ error: 'Not authenticated' }), {
       status: 401,
       headers: { ...getCorsHeaders(request), 'Content-Type': 'application/json' }
@@ -234,7 +242,7 @@ router.get('/api/journal', async (request, env) => {
 
   const session = await env.DB.prepare(
     'SELECT user_id FROM sessions WHERE id = ? AND expires_at > ?'
-  ).bind(sessionId, new Date().toISOString()).first();
+  ).bind(token, new Date().toISOString()).first();
 
   if (!session) {
     return new Response(JSON.stringify({ error: 'Session expired' }), {
@@ -269,6 +277,14 @@ function getCookieValue(cookieHeader, name) {
   if (!cookieHeader) return null;
   const match = cookieHeader.match(new RegExp(`${name}=([^;]+)`));
   return match ? match[1] : null;
+}
+
+function getAuthToken(request) {
+  const authHeader = request.headers.get('Authorization');
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    return authHeader.substring(7);
+  }
+  return null;
 }
 
 // 404 handler is built into the router.handle method

@@ -36,15 +36,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+          setLoading(false);
+          return;
+        }
+
         const response = await fetch(apiEndpoints.auth.me, {
-          credentials: 'include'
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
         });
         if (response.ok) {
           const userData = await response.json();
           setUser(userData);
+        } else {
+          localStorage.removeItem('auth_token');
         }
       } catch (error) {
         console.error('Auth check failed:', error);
+        localStorage.removeItem('auth_token');
       } finally {
         setLoading(false);
       }
@@ -57,7 +68,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const response = await fetch(apiEndpoints.auth.login, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
       body: JSON.stringify({ email, password }),
     });
 
@@ -66,15 +76,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       throw new Error(error.error || 'Login failed');
     }
 
-    const user = await response.json();
-    setUser(user);
+    const data = await response.json();
+    localStorage.setItem('auth_token', data.token);
+    setUser({ id: data.id, email: data.email, name: data.name });
   };
 
   const register = async (email: string, password: string, name?: string) => {
     const response = await fetch(apiEndpoints.auth.register, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
       body: JSON.stringify({ email, password, name }),
     });
 
@@ -83,19 +93,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       throw new Error(error.error || 'Registration failed');
     }
 
-    const user = await response.json();
-    setUser(user);
+    const data = await response.json();
+    localStorage.setItem('auth_token', data.token);
+    setUser({ id: data.id, email: data.email, name: data.name });
   };
 
   const logout = async () => {
     try {
-      await fetch(apiEndpoints.auth.logout, {
-        method: 'POST',
-        credentials: 'include',
-      });
+      const token = localStorage.getItem('auth_token');
+      if (token) {
+        await fetch(apiEndpoints.auth.logout, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      }
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
+      localStorage.removeItem('auth_token');
       setUser(null);
     }
   };
