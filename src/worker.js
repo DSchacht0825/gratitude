@@ -10,7 +10,7 @@ const router = {
 
     // Handle CORS preflight
     if (request.method === 'OPTIONS') {
-      return new Response(null, { headers: corsHeaders });
+      return new Response(null, { headers: getCorsHeaders(request) });
     }
 
     // Find exact match first
@@ -29,15 +29,37 @@ const router = {
   }
 };
 
-// CORS headers
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+// CORS headers - function to get dynamic origin for credentials
+const getCorsHeaders = (request) => {
+  const origin = request.headers.get('Origin');
+
+  // Allow specific origins (Netlify domains and localhost for development)
+  const allowedOrigins = [
+    'https://mygratitude.netlify.app',
+    'http://localhost:3000',
+    'http://localhost:3001',
+  ];
+
+  // Check if origin is from Netlify or in allowed list
+  let corsOrigin = allowedOrigins[0]; // default
+
+  if (origin) {
+    if (allowedOrigins.includes(origin) ||
+        origin.endsWith('.netlify.app') ||
+        origin.includes('netlify.com')) {
+      corsOrigin = origin;
+    }
+  }
+
+  return {
+    'Access-Control-Allow-Origin': corsOrigin,
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
+  };
 };
 
-// Handle CORS preflight
-router.options('*', () => new Response(null, { headers: corsHeaders }));
+// Handle CORS preflight is handled in the router.handle method
 
 // User registration
 router.post('/api/auth/register', async (request, env) => {
@@ -58,7 +80,7 @@ router.post('/api/auth/register', async (request, env) => {
 
     return new Response(JSON.stringify({ id: userId, email, name }), {
       headers: {
-        ...corsHeaders,
+        ...getCorsHeaders(request),
         'Content-Type': 'application/json',
         'Set-Cookie': `session=${session}; HttpOnly; Secure; SameSite=Strict; Max-Age=604800`
       }
@@ -66,7 +88,7 @@ router.post('/api/auth/register', async (request, env) => {
   } catch (error) {
     return new Response(JSON.stringify({ error: 'Registration failed' }), {
       status: 400,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      headers: { ...getCorsHeaders(request), 'Content-Type': 'application/json' }
     });
   }
 });
@@ -81,7 +103,7 @@ router.post('/api/auth/login', async (request, env) => {
     if (!user || !await verifyPassword(password, user.password)) {
       return new Response(JSON.stringify({ error: 'Invalid credentials' }), {
         status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        headers: { ...getCorsHeaders(request), 'Content-Type': 'application/json' }
       });
     }
 
@@ -92,7 +114,7 @@ router.post('/api/auth/login', async (request, env) => {
 
     return new Response(JSON.stringify({ id: user.id, email: user.email, name: user.name }), {
       headers: {
-        ...corsHeaders,
+        ...getCorsHeaders(request),
         'Content-Type': 'application/json',
         'Set-Cookie': `session=${session}; HttpOnly; Secure; SameSite=Strict; Max-Age=604800`
       }
@@ -100,7 +122,7 @@ router.post('/api/auth/login', async (request, env) => {
   } catch (error) {
     return new Response(JSON.stringify({ error: 'Login failed' }), {
       status: 400,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      headers: { ...getCorsHeaders(request), 'Content-Type': 'application/json' }
     });
   }
 });
@@ -112,7 +134,7 @@ router.get('/api/auth/me', async (request, env) => {
   if (!sessionId) {
     return new Response(JSON.stringify({ error: 'Not authenticated' }), {
       status: 401,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      headers: { ...getCorsHeaders(request), 'Content-Type': 'application/json' }
     });
   }
 
@@ -123,7 +145,7 @@ router.get('/api/auth/me', async (request, env) => {
   if (!session) {
     return new Response(JSON.stringify({ error: 'Session expired' }), {
       status: 401,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      headers: { ...getCorsHeaders(request), 'Content-Type': 'application/json' }
     });
   }
 
@@ -132,7 +154,7 @@ router.get('/api/auth/me', async (request, env) => {
     email: session.email,
     name: session.name
   }), {
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    headers: { ...getCorsHeaders(request), 'Content-Type': 'application/json' }
   });
 });
 
@@ -146,7 +168,7 @@ router.post('/api/auth/logout', async (request, env) => {
 
   return new Response(JSON.stringify({ message: 'Logged out' }), {
     headers: {
-      ...corsHeaders,
+      ...getCorsHeaders(request),
       'Content-Type': 'application/json',
       'Set-Cookie': 'session=; HttpOnly; Secure; SameSite=Strict; Max-Age=0'
     }
@@ -160,7 +182,7 @@ router.post('/api/journal', async (request, env) => {
   if (!sessionId) {
     return new Response(JSON.stringify({ error: 'Not authenticated' }), {
       status: 401,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      headers: { ...getCorsHeaders(request), 'Content-Type': 'application/json' }
     });
   }
 
@@ -171,7 +193,7 @@ router.post('/api/journal', async (request, env) => {
   if (!session) {
     return new Response(JSON.stringify({ error: 'Session expired' }), {
       status: 401,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      headers: { ...getCorsHeaders(request), 'Content-Type': 'application/json' }
     });
   }
 
@@ -195,7 +217,7 @@ router.post('/api/journal', async (request, env) => {
   ).run();
 
   return new Response(JSON.stringify({ success: true }), {
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    headers: { ...getCorsHeaders(request), 'Content-Type': 'application/json' }
   });
 });
 
@@ -206,7 +228,7 @@ router.get('/api/journal', async (request, env) => {
   if (!sessionId) {
     return new Response(JSON.stringify({ error: 'Not authenticated' }), {
       status: 401,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      headers: { ...getCorsHeaders(request), 'Content-Type': 'application/json' }
     });
   }
 
@@ -217,7 +239,7 @@ router.get('/api/journal', async (request, env) => {
   if (!session) {
     return new Response(JSON.stringify({ error: 'Session expired' }), {
       status: 401,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      headers: { ...getCorsHeaders(request), 'Content-Type': 'application/json' }
     });
   }
 
@@ -227,7 +249,7 @@ router.get('/api/journal', async (request, env) => {
   ).bind(session.user_id, today).first();
 
   return new Response(JSON.stringify(entry || {}), {
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    headers: { ...getCorsHeaders(request), 'Content-Type': 'application/json' }
   });
 });
 
