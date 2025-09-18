@@ -1,8 +1,8 @@
 import React from 'react';
-import { AuthProvider, useAuth } from './contexts/AuthContext.netlify';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import AuthPage from './components/Auth/AuthPage';
 import Header from './components/Layout/Header';
-import JournalEntry from './components/Journal/JournalEntry.netlify';
+import JournalEntry from './components/Journal/JournalEntry';
 import UnsplashBackground from './components/Background/UnsplashBackground';
 
 function AppContent() {

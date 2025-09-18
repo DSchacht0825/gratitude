@@ -1,0 +1,14 @@
+name = "the-daily-pause"
+main = "src/worker.js"
+compatibility_date = "2024-01-01"
+
+[env.production]
+name = "the-daily-pause"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "daily-pause-db"
+database_id = "48f58ae3-4732-4646-b8af-1b8f1db057d9"
+
+[vars]
+NODE_ENV = "production"
