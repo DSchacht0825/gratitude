@@ -90,7 +90,7 @@ const JournalEntry: React.FC = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(entry),
+        body: JSON.stringify({ ...entry, date: currentDate }),
       });
 
       if (response.ok) {

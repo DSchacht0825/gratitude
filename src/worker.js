@@ -206,8 +206,14 @@ router.post('/api/journal', async (request, env) => {
   }
 
   const entry = await request.json();
-  const today = new Date().toISOString().split('T')[0];
-  const entryId = crypto.randomUUID();
+  const date = entry.date || new Date().toISOString().split('T')[0];
+
+  // First, check if an entry already exists for this date
+  const existingEntry = await env.DB.prepare(
+    'SELECT id FROM journal_entries WHERE user_id = ? AND date = ?'
+  ).bind(session.user_id, date).first();
+
+  const entryId = existingEntry ? existingEntry.id : crypto.randomUUID();
 
   await env.DB.prepare(`
     INSERT OR REPLACE INTO journal_entries
@@ -216,7 +222,7 @@ router.post('/api/journal', async (request, env) => {
      evening_reflection3, evening_learning, evening_gratitude, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).bind(
-    entryId, session.user_id, today,
+    entryId, session.user_id, date,
     entry.morningGratitude1 || null, entry.morningGratitude2 || null, entry.morningGratitude3 || null,
     entry.morningIntention || null, entry.morningPrayer || null,
     entry.eveningReflection1 || null, entry.eveningReflection2 || null, entry.eveningReflection3 || null,
