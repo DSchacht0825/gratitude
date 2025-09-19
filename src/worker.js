@@ -158,7 +158,7 @@ router.get('/api/auth/me', async (request, env) => {
   }
 
   return new Response(JSON.stringify({
-    id: session.id,
+    id: session.user_id,
     email: session.email,
     name: session.name
   }), {
